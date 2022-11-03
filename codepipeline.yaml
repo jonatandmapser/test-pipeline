@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion : '2010-09-09'
 Description: >
   This template deploys a CodePipeline with its required resources.
-
   The following stages are predefined in this template:
   - Source
   - UpdatePipeline
@@ -9,10 +8,7 @@ Description: >
   - BuildAndPackage (MainGitBranch only)
   - DeployTest (MainGitBranch only)
   - DeployProd (MainGitBranch only)
-
   **WARNING** You will be billed for the AWS resources used if you create a stack from this template.
-
-
 # To deploy this template and connect to the main git branch, run this against the leading account:
 # `sam deploy -t codepipeline.yaml --stack-name <stack-name> --capabilities=CAPABILITY_IAM`.
 # After creating the stack, the CodeStar Connection is in PENDING status by default. You must complete
@@ -534,6 +530,17 @@ Resources:
                 Condition:
                   StringEquals:
                     aws:ResourceTag/Role: pipeline-execution-role
+        - PolicyName: CodeBuilS3
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::pruebacodebuildjonatan/*"
 
   # Uncomment and modify the following step for running the unit-tests
   # CodeBuildProjectUnitTest:
