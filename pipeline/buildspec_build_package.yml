@@ -21,6 +21,8 @@ phases:
       - zip -g deployment_package.zip app.py
   post_build:
     commands:
-      - echo "Updating lambda Function..."
+      - echo "Uploading zip to S3..."
       - aws s3 cp deployment_package.zip s3://pruebacodebuildjonatan
+      - echo "Updating lambda Function..."
+      - aws lambda update-function-code --function-name pruebasjonatan --zip-file fileb://deployment_package.zip
       - echo "DONE!!"  

@@ -219,80 +219,7 @@ Resources:
                   - Name: BuildArtifactAsZip
           - !Ref AWS::NoValue
 
-        - !If
-          - IsMainBranchPipeline
-          - Name: DeployTest
-            Actions:
-              - Name: DeployTest
-                ActionTypeId:
-                  Category: Build
-                  Owner: AWS
-                  Provider: CodeBuild
-                  Version: "1"
-                Configuration:
-                  ProjectName: !Ref CodeBuildProjectDeploy
-                  EnvironmentVariables: !Sub |
-                    [
-                      {"name": "ENV_TEMPLATE", "value": "packaged-test.yaml"},
-                      {"name": "ENV_REGION", "value": "${TestingRegion}"},
-                      {"name": "ENV_STACK_NAME", "value": "${TestingStackName}"},
-                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${TestingPipelineExecutionRole}"},
-                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionRole}"},
-                      {"name": "ENV_BUCKET", "value": "${TestingArtifactBucket}"},
-                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${TestingImageRepository}"}
-                    ]
-                InputArtifacts:
-                  - Name: BuildArtifactAsZip
-                RunOrder: 1
-              # Uncomment the following step for running the integration tests
-              # - Name: IntegrationTest
-              #   ActionTypeId:
-              #     Category: Build
-              #     Owner: AWS
-              #     Provider: CodeBuild
-              #     Version: "1"
-              #   Configuration:
-              #     ProjectName: !Ref CodeBuildProjectIntegrationTest
-              #   InputArtifacts:
-              #     - Name: SourceCodeAsZip
-              #   RunOrder: 2
-          - !Ref AWS::NoValue
-
-        - !If
-          - IsMainBranchPipeline
-          - Name: DeployProd
-            Actions:
-              # uncomment this to have a manual approval step before deployment to production
-              # - Name: ManualApproval
-              #   ActionTypeId:
-              #    Category: Approval
-              #    Owner: AWS
-              #    Provider: Manual
-              #    Version: "1"
-              #   RunOrder: 1
-              - Name: DeployProd
-                ActionTypeId:
-                  Category: Build
-                  Owner: AWS
-                  Provider: CodeBuild
-                  Version: "1"
-                RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
-                Configuration:
-                  ProjectName: !Ref CodeBuildProjectDeploy
-                  EnvironmentVariables: !Sub |
-                    [
-                      {"name": "ENV_TEMPLATE", "value": "packaged-prod.yaml"},
-                      {"name": "ENV_REGION", "value": "${ProdRegion}"},
-                      {"name": "ENV_STACK_NAME", "value": "${ProdStackName}"},
-                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
-                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"},
-                      {"name": "ENV_BUCKET", "value": "${ProdArtifactBucket}"},
-                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${ProdImageRepository}"}
-                    ]
-                InputArtifacts:
-                  - Name: BuildArtifactAsZip
-          - !Ref AWS::NoValue
-
+        
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -530,7 +457,7 @@ Resources:
                 Condition:
                   StringEquals:
                     aws:ResourceTag/Role: pipeline-execution-role
-        - PolicyName: CodeBuilS3
+        - PolicyName: CodeBuildS3
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -541,6 +468,24 @@ Resources:
                   - "s3:PutObject"
                 Resource:
                   - !Sub "arn:${AWS::Partition}:s3:::pruebacodebuildjonatan/*"
+        - PolicyName: updatefunction
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:AddPermission"
+                  - "lambda:RemovePermission"
+                  - "lambda:CreateAlias"
+                  - "lambda:UpdateAlias"
+                  - "lambda:DeleteAlias"
+                  - "lambda:UpdateFunctionCode"
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:PutFunctionConcurrency"
+                  - "lambda:DeleteFunctionConcurrency"
+                  - "lambda:PublishVersion"
+                Resource:
+                  -  "arn:aws:lambda:eu-west-1:659455586284:function:pruebasjonatan"
 
   # Uncomment and modify the following step for running the unit-tests
   # CodeBuildProjectUnitTest:
